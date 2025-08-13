@@ -172,7 +172,7 @@ export const SlideToggleContent = ({
       data-direction={slideDirection}
       data-state={open}
       className={cn(
-        "flex overflow-hidden transition-all duration-500 ease-in-out w-0 h-0",
+        "flex overflow-hidden transition-all duration-300 ease-in-out w-0 h-0",
         // Direction-based layout
         slideDirection === "leftToRight" || slideDirection === "rightToLeft"
           ? "items-center space-x-1"
