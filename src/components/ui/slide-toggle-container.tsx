@@ -70,8 +70,8 @@ export const SlideToggleRoot = ({
     <SlideToggleContext.Provider value={providerValues}>
       <div
         className={cn(
-          "flex justify-start items-center gap-2 h-fit w-fit ",
-          isSlideBottomOrTop && "flex-col",
+          "flex justify-start items-start gap-2 h-fit w-fit ",
+          isSlideBottomOrTop && "flex-col items-center ",
           className
         )}
       >
@@ -93,7 +93,6 @@ type SlideToggleTriggerProps = Omit<ButtonProps, "onClick"> & {
 export const SlideToggleTrigger = ({
   className,
   children,
-  size = "icon",
   variant,
   tooltip,
   ...other
@@ -123,11 +122,10 @@ export const SlideToggleTrigger = ({
         aria-expanded={open}
         aria-controls={slideDirection}
         className={cn(
-          " flex-shrink-0 shadow-sm transition-[width] duration-500 ease-in-out",
+          " flex-shrink-0 mt-2 shadow-sm transition-[width] duration-500 ease-in-out",
           className
         )}
         data-state={open}
-        size={size}
         variant={variant ?? open ? "default" : "outline"}
         onClick={() => onOpenChange(!open)}
         {...other}
@@ -141,7 +139,6 @@ export const SlideToggleTrigger = ({
       onOpenChange,
       open,
       other,
-      size,
       slideDirection,
       variant,
       icon,

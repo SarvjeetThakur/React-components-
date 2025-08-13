@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   SlideToggleTrigger,
   SlideToggleContent,
@@ -6,10 +7,13 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen p-8 flex justify-end pb-20 gap-16 sm:p-20">
-      <SlideToggleRoot className=" items-start">
-        <SlideToggleTrigger />
-        <SlideToggleContent className=" max-w-sm">d</SlideToggleContent>
+    <div className="p-8 flex justify-center pb-20 gap-16 sm:p-20">
+      <SlideToggleRoot slideDirection="topToBottom">
+        <SlideToggleTrigger>open</SlideToggleTrigger>
+        <SlideToggleContent>
+          <Button>create</Button>
+          <Button>create</Button>
+        </SlideToggleContent>
       </SlideToggleRoot>
     </div>
   );
