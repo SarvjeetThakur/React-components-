@@ -122,7 +122,7 @@ export const SlideToggleTrigger = ({
         aria-expanded={open}
         aria-controls={slideDirection}
         className={cn(
-          " flex-shrink-0 mt-2 shadow-sm transition-[width] duration-500 ease-in-out",
+          " flex-shrink-0 shadow-sm transition-[width] duration-500 ease-in-out",
           className
         )}
         data-state={open}
@@ -197,7 +197,7 @@ export const SlideToggleContent = ({
     >
       <div
         className={cn(
-          "flex items-center p-2 space-x-1",
+          "flex items-center space-x-1",
           (slideDirection === "topToBottom" ||
             slideDirection === "BottomToTop") &&
             "flex-col space-y-1",

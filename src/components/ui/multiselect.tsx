@@ -7,13 +7,14 @@ import {
 import { Input } from "./input";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { ChevronRight, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, X } from "lucide-react";
 import { ChangeEventHandler, useCallback, useMemo, useState } from "react";
 import { Checkbox } from "./checkbox";
 
 export interface Item {
   label: string;
   value: string;
+  disabled?: boolean;
   children?: Item[];
 }
 
@@ -33,26 +34,28 @@ function RenderItem({
   onValueSelect,
 }: RenderItemProps) {
   const haveChildren = !!item?.children && !!item?.children?.length;
+  const disabled = item?.disabled ?? false;
   const isSelected = selectedValues.includes(item?.value);
   const [open, setOpen] = useState(isSelected);
   return (
-    <div
-      role="button"
-      onClick={() => {
-        if (!withCheckBox) {
-          onValueSelect(item);
-        }
-      }}
-      className={cn(
-        "p-1  group rounded ",
-        haveChildren && "ml-2",
-        isSelected && !haveChildren && "bg-gray-200",
-        !haveChildren && "border hover:bg-gray-200"
-      )}
-    >
-      <div className="flex gap-2 justify-start items-center">
+    <div className={cn(haveChildren && " ml-2")}>
+      <div
+        role="button"
+        onClick={() => {
+          if (!withCheckBox && !disabled) {
+            onValueSelect(item);
+          }
+        }}
+        className={cn(
+          "flex gap-2 group justify-start items-center text-sm hover:bg-gray-200 p-1 rounded",
+          isSelected && "bg-gray-200",
+          haveChildren && "my-2",
+          disabled && "bg-gray-50 hover:bg-gray-50 cursor-not-allowed"
+        )}
+      >
         {multiple && withCheckBox && (
           <Checkbox
+            disabled={disabled}
             className="group-hover:bg-white"
             checked={isSelected}
             onClick={() => {
@@ -62,7 +65,8 @@ function RenderItem({
         )}
         {haveChildren && (
           <ChevronRight
-            className={cn(open && "rotate-90")}
+            size={20}
+            className={cn("cursor-pointer", open && "rotate-90")}
             onClick={(e) => {
               e.stopPropagation();
               setOpen((pre) => !pre);
@@ -75,7 +79,6 @@ function RenderItem({
         <Collapsible open={open} onOpenChange={setOpen}>
           <CollapsibleContent>
             {haveChildren &&
-              multiple &&
               item?.children &&
               item.children.map((item) => {
                 return (
@@ -172,6 +175,21 @@ function searchTreeByLabelAll(tree: Item[], labelToFind: string): Item[] {
   return matches;
 }
 
+function makeValidList<T>(list: T): Item[] {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+
+  const firstElement = list?.[0] ?? "";
+  const isStringOrNumber =
+    typeof firstElement === "string" || typeof firstElement === "number";
+
+  if (isStringOrNumber) {
+    return list.map((v) => ({ label: v, value: v, children: [] }));
+  }
+  return list;
+}
+
 function Multiselect({
   list,
   withSearch = false,
@@ -182,6 +200,8 @@ function Multiselect({
 }: MultiselectProps) {
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+
+  const validList = useMemo(() => makeValidList(list), [list]);
 
   const onValueSelect = useCallback(
     (item: Item) => {
@@ -201,7 +221,7 @@ function Multiselect({
   );
 
   const allSelectedData = selectedValues
-    .map((id) => findNodeInTree(list, (item) => item?.value === id))
+    .map((id) => findNodeInTree(validList, (item) => item?.value === id))
     .filter((value) => !!value);
   const isAnySelected = allSelectedData.length;
 
@@ -211,8 +231,8 @@ function Multiselect({
   };
 
   const searchedList = useMemo(
-    () => searchTreeByLabelAll(list, search),
-    [list, search]
+    () => searchTreeByLabelAll(validList, search),
+    [validList, search]
   );
 
   const onInputChange: ChangeEventHandler<HTMLInputElement> = ({
@@ -221,53 +241,72 @@ function Multiselect({
     setSearch(value);
   };
   return (
-    <Popover>
-      <PopoverTrigger className={cn("border rounded-sm p-2", className)}>
-        {isAnySelected ? (
-          <div className="flex flex-wrap gap-1">
-            {allSelectedData.map(({ label, value }) => (
-              <span
-                className="flex rounded-sm p-0.5 bg-gray-100 items-center justify-start gap-1"
-                key={value}
-              >
-                {label}
-                <X
-                  role="button"
-                  className=" text-destructive cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveSelectedValues(value);
-                  }}
-                  size={14}
-                />
-              </span>
-            ))}
+    <div className="w-fit h-fit">
+      <Popover>
+        <PopoverTrigger
+          className={cn(
+            "border shadow-none group flex rounded-sm p-2 max-w-sm",
+            className
+          )}
+        >
+          <div className="text-sm ">
+            {isAnySelected ? (
+              <div className="flex flex-wrap gap-0.5">
+                {allSelectedData.map(({ label, value }) => (
+                  <span
+                    className="flex rounded-sm p-0.5 bg-gray-100 items-center justify-start gap-1"
+                    key={value}
+                  >
+                    {label}
+                    {multiple && (
+                      <X
+                        role="button"
+                        className=" text-destructive cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveSelectedValues(value);
+                        }}
+                        size={14}
+                      />
+                    )}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span>{placeholder}</span>
+            )}
           </div>
-        ) : (
-          placeholder
-        )}
-      </PopoverTrigger>
-      <PopoverContent className="w-auto min-w-(--radix-popover-trigger-width)">
-        {withSearch && (
-          <Input
-            onChange={onInputChange}
-            value={search}
-            className="mb-3"
-            placeholder="Search you content"
+          <ChevronDown
+            size={20}
+            className="ml-auto group-data-[state=open]:rotate-180"
           />
-        )}
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-1 min-w-(--radix-popover-trigger-width)">
+          {withSearch && (
+            <div className="flex justify-start items-center border-b">
+              <Search size={20} className="text-gray-400" />
+              <Input
+                onChange={onInputChange}
+                value={search}
+                className=" border-0 shadow-none active:outline-none focus-visible:ring-0"
+                placeholder="Search you content"
+                type="search"
+              />
+            </div>
+          )}
 
-        <div className="grid gap-2">
-          <RenderList
-            withCheckBox={withCheckBox}
-            selectedValues={selectedValues}
-            list={searchedList}
-            multiple={multiple}
-            onValueSelect={onValueSelect}
-          />
-        </div>
-      </PopoverContent>
-    </Popover>
+          <div className="grid gap-2">
+            <RenderList
+              withCheckBox={withCheckBox}
+              selectedValues={selectedValues}
+              list={searchedList}
+              multiple={multiple}
+              onValueSelect={onValueSelect}
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
 
