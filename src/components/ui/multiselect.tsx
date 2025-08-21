@@ -10,6 +10,8 @@ import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight, Search, X } from "lucide-react";
 import { ChangeEventHandler, useCallback, useMemo, useState } from "react";
 import { Checkbox } from "./checkbox";
+import { Button } from "./button";
+import { ScrollArea } from "./scroll-area";
 
 export interface Item {
   label: string;
@@ -39,7 +41,7 @@ function RenderItem({
   const [open, setOpen] = useState(isSelected);
   return (
     <div className={cn(haveChildren && " ml-2")}>
-      <div
+      <button
         role="button"
         onClick={() => {
           if (!withCheckBox && !disabled) {
@@ -47,9 +49,8 @@ function RenderItem({
           }
         }}
         className={cn(
-          "flex gap-2 group justify-start items-center text-sm hover:bg-gray-200 p-1 rounded",
+          "flex w-full gap-2 group justify-start items-center text-sm hover:bg-gray-200 p-1 rounded",
           isSelected && "bg-gray-200",
-          haveChildren && "my-2",
           disabled && "bg-gray-50 hover:bg-gray-50 cursor-not-allowed"
         )}
       >
@@ -64,17 +65,19 @@ function RenderItem({
           />
         )}
         {haveChildren && (
-          <ChevronRight
-            size={20}
-            className={cn("cursor-pointer", open && "rotate-90")}
+          <Button
+            data-state={open}
             onClick={(e) => {
               e.stopPropagation();
               setOpen((pre) => !pre);
             }}
-          />
+            className="size-fit cursor-pointer p-0 has-[>svg]:px-0 bg-transparent hover:bg-transparent text-primary"
+          >
+            <ChevronRight size={20} className={cn(open && "rotate-90")} />
+          </Button>
         )}
         <p>{item.label}</p>
-      </div>
+      </button>
       {open && (
         <Collapsible open={open} onOpenChange={setOpen}>
           <CollapsibleContent>
@@ -128,8 +131,8 @@ function RenderList({
   });
 }
 
-interface MultiselectProps {
-  list: Item[];
+interface MultiselectProps<T> {
+  list: T[];
   withSearch?: boolean;
   className?: string;
   placeholder?: string;
@@ -190,14 +193,14 @@ function makeValidList<T>(list: T): Item[] {
   return list;
 }
 
-function Multiselect({
+function Multiselect<T>({
   list,
   withSearch = false,
   multiple = true,
   className,
   withCheckBox = false,
   placeholder = "Select value",
-}: MultiselectProps) {
+}: MultiselectProps<T>) {
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [search, setSearch] = useState("");
 
@@ -240,6 +243,8 @@ function Multiselect({
   }) => {
     setSearch(value);
   };
+  const isNotFound = !searchedList.length;
+
   return (
     <div className="w-fit h-fit">
       <Popover>
@@ -249,12 +254,15 @@ function Multiselect({
             className
           )}
         >
-          <div className="text-sm ">
+          <div className="text-sm w-full">
             {isAnySelected ? (
               <div className="flex flex-wrap gap-0.5">
                 {allSelectedData.map(({ label, value }) => (
                   <span
-                    className="flex rounded-sm p-0.5 bg-gray-100 items-center justify-start gap-1"
+                    className={cn(
+                      "flex rounded-sm p-0.5 bg-gray-100 items-center justify-start gap-1",
+                      !multiple && "w-full"
+                    )}
                     key={value}
                   >
                     {label}
@@ -278,10 +286,10 @@ function Multiselect({
           </div>
           <ChevronDown
             size={20}
-            className="ml-auto group-data-[state=open]:rotate-180"
+            className="ml-auto min-w-5 min-h-5 group-data-[state=open]:rotate-180"
           />
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-1 min-w-(--radix-popover-trigger-width)">
+        <PopoverContent className="p-1 w-(--radix-popover-trigger-width)">
           {withSearch && (
             <div className="flex justify-start items-center border-b">
               <Search size={20} className="text-gray-400" />
@@ -295,15 +303,24 @@ function Multiselect({
             </div>
           )}
 
-          <div className="grid gap-2">
-            <RenderList
-              withCheckBox={withCheckBox}
-              selectedValues={selectedValues}
-              list={searchedList}
-              multiple={multiple}
-              onValueSelect={onValueSelect}
-            />
-          </div>
+          {!isNotFound && (
+            <ScrollArea className="h-fit max-h-96 overflow-auto">
+              <div className="grid gap-2">
+                <RenderList
+                  withCheckBox={withCheckBox}
+                  selectedValues={selectedValues}
+                  list={searchedList}
+                  multiple={multiple}
+                  onValueSelect={onValueSelect}
+                />
+              </div>
+            </ScrollArea>
+          )}
+          {isNotFound && (
+            <div className="min-h-12 p-2 break-all flex justify-center items-center text-primary/60">
+              Result Not Found {search.trim() && `For ${search}`}
+            </div>
+          )}
         </PopoverContent>
       </Popover>
     </div>
